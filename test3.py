@@ -284,7 +284,7 @@ def start_screen():
                   "T - новая волна"]
 
     # Загружаем и масштабируем фон
-    fon = pygame.transform.scale(load_image('images/foon.png'), (WIDTH, HEIGHT))
+    fon = pygame.transform.scale(load_image('images/screen0.png'), (WIDTH, HEIGHT))
     screen.blit(fon, (0, 0))
 
     shadow = pygame.Surface((WIDTH, HEIGHT))
@@ -298,11 +298,11 @@ def start_screen():
 
     # Отрисовка заголовка
     title_rendered = title_font.render(intro_text[0], True, (255, 255, 255))
-    title_rect = title_rendered.get_rect(centerx=WIDTH * 0.7, top=40)
+    title_rect = title_rendered.get_rect(centerx=WIDTH * 0.7, top=420)
     screen.blit(title_rendered, title_rect)
 
     # Отрисовка текста
-    text_coord = 120
+    text_coord = 500
     for line in intro_text[2:]:  # Начинаем с правил игры
         string_rendered = font.render(line, True, (255, 255, 255))
         intro_rect = string_rendered.get_rect()
@@ -313,12 +313,13 @@ def start_screen():
 
     # Декоративная линия
     pygame.draw.line(screen, (255, 255, 255),
-                    (WIDTH * 0.55 - 20, 110),
-                    (WIDTH * 0.75 + 200, 110),
+                    (WIDTH * 0.55 - 20, 490),
+                    (WIDTH * 0.75 + 200, 490),
                     2)
 
     # Текст "Нажмите любую клавишу" внизу экрана
     start_text = font.render("Нажмите любую клавишу для начала игры", True, (255, 255, 255))
+    start_text.set_alpha(160)
     start_text_rect = start_text.get_rect(centerx=WIDTH // 2, bottom=HEIGHT - 50)
     screen.blit(start_text, start_text_rect)
 
