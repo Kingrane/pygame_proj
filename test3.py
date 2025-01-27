@@ -9,7 +9,7 @@ pygame.init()
 # Настройки окна
 WIDTH, HEIGHT = 1540, 800
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
-pygame.display.set_caption("Защита Башни")
+pygame.display.set_caption("The Last Tower")
 
 # Цвета
 WHITE = (255, 255, 255)
@@ -33,16 +33,18 @@ def load_image(name):
 
 
 try:
-    background = pygame.transform.scale(load_image("images/background1.png"), (WIDTH, HEIGHT))
+    background = pygame.transform.scale(load_image("images/map.png"), (WIDTH, HEIGHT))
     player_sprite_sheet = load_image("images/player_walk.png")
-    enemy_image = pygame.transform.scale(load_image("images/enemy.png"), (40, 40))
-    tower_image = pygame.transform.scale(load_image("images/tower.png"), (130, 130))
-    attack_image = pygame.transform.scale(load_image("images/sword3.png"), (70, 70))
+    icon = pygame.image.load('images/icon.png')
+    enemy_image = pygame.transform.scale(load_image("images/enemy.png"), (30, 30))
+    tower_image = pygame.transform.scale(load_image("images/tower.png"), (100, 100))
+    attack_image = pygame.transform.scale(load_image("images/sword3.png"), (55, 55))
 except Exception as e:
     print(f"Ошибка загрузки изображений: {e}")
     pygame.quit()
     exit()
 
+pygame.display.set_icon(icon)
 # Размеры кадра спрайт-листа
 frame_width = 30
 frame_height = 30
@@ -90,11 +92,11 @@ class Player(pygame.sprite.Sprite):
         self.speed = 6  # увеличена скорость
         self.direction = "right"
         self.animation_index = 0
-        self.animation_speed = 0.20  # увеличена скорость анимации
+        self.animation_speed = 0.20
         self.is_attacking = False
-        self.attack_cooldown = 15  # Уменьшил кулдаун
+        self.attack_cooldown = 15
         self.attack_timer = 0
-        self.attack_range = 95  # увеличена дальность
+        self.attack_range = 95
 
     def update(self):
         self.move()
@@ -150,7 +152,7 @@ class Tower(pygame.sprite.Sprite):
         super().__init__()
         self.image = tower_image
         self.rect = self.image.get_rect(center=pos)
-        self.health = 100  # увеличено
+        self.health = 100
         self.max_health = self.health
 
     def draw_health_bar(self, surface):
@@ -422,9 +424,9 @@ while running:
     # Отображение текста и иконок
     draw_text(f"Здоровье башни: {tower.health}", font, WHITE, screen, 10, 10)
     draw_text(f"Деньги: {money}", font, YELLOW, screen, 10, 50)
-    draw_text(f"Волна: {wave}", title_font, ORANGE, screen, 10, 90)  # Изменен цвет
+    draw_text(f"Волна: {wave}", title_font, WHITE, screen, 10, 90)
     if wave_active:
-        draw_text(f"Оставшиеся враги: {max_enemies_per_wave - current_wave_enemy_count}", font, WHITE, screen, 10, 140)
+        draw_text(f"Оставшиеся враги: {max_enemies_per_wave - current_wave_enemy_count}", font, ORANGE, screen, 10, 140)
     else:
         draw_text(f"Оставшиеся враги: 0", font, WHITE, screen, 10, 140)
 
