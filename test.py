@@ -2,6 +2,7 @@ import pygame
 import random
 import math
 import sys
+import os
 
 # Инициализация Pygame
 pygame.init()
@@ -35,7 +36,7 @@ def load_image(name):
 try:
     background = pygame.transform.scale(load_image("images/map.png"), (WIDTH, HEIGHT))
     player_sprite_sheet = load_image("images/player_walk.png")
-    icon = pygame.image.load('images/icon.png')
+    icon = pygame.image.load('images/tower.png')
     enemy_image = pygame.transform.scale(load_image("images/enemy.png"), (30, 30))
     tower_image = pygame.transform.scale(load_image("images/tower.png"), (100, 100))
     attack_image = pygame.transform.scale(load_image("images/sword3.png"), (55, 55))
@@ -277,6 +278,23 @@ def terminate():
     sys.exit()
 
 
+def save_game(wave, money, health):
+    with open('save.txt', "w") as f:
+        f.write(f"{wave}\n{money}\n{health}")
+
+
+
+def load_game():
+    if os.path.exists('save.txt'):
+        with open('save.txt', "r") as f:
+            lines = f.readlines()
+            wave = int(lines[0].strip())
+            money = int(lines[1].strip())
+            health = int(lines[2].strip())
+            return {"wave": wave, "money": money, "health": health}
+    return None
+
+
 # Функция для отображения заставки
 def start_screen():
     intro_text = ["The Last Tower", "",
@@ -330,7 +348,15 @@ def start_screen():
             if event.type == pygame.QUIT:
                 terminate()
             elif event.type == pygame.KEYDOWN or event.type == pygame.MOUSEBUTTONDOWN:
-                return
+                if event.key == pygame.K_n:
+                    game_active = True
+                    level, money, health = 1, 0, 100
+                    player_pos = [400, 300]
+                elif event.key == pygame.K_t and saved_data:
+                    game_active = True
+                    level, money, health = saved_data["level"], saved_data["money"], saved_data["health"]
+                    player_pos = saved_data["player_pos"]
+
         pygame.display.flip()
         clock.tick(50)
 
