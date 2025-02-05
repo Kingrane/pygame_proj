@@ -2,6 +2,7 @@ import pygame
 import random
 import math
 import sys
+import os
 
 pygame.init()
 
@@ -31,11 +32,118 @@ def load_image(name):
     return image
 
 
+def save_game():
+    global wave
+    try:
+        # Проверяем, завершена ли текущая волна
+        if wave_active or len(enemies_group) > 0:
+            # Если волна не завершена, сохраняем wave - 1
+            save_wave = max(wave - 1, 0)  # Убедимся, что wave не станет отрицательным
+        else:
+            # Если волна завершена, сохраняем текущее значение wave
+            save_wave = wave
+
+        with open("save.txt", "w") as f:
+            f.write(f"{save_wave}\n")  # Сохраняем волну
+            f.write(f"{money}\n")      # Сохраняем деньги
+            f.write(f"{tower.health}\n")  # Сохраняем здоровье башни
+        print("Игра сохранена!")
+    except Exception as e:
+        print(f"Ошибка сохранения: {e}")
+
+
+def pause_menu():
+    paused = True
+    try:
+        font = pygame.font.Font("fontss.ttf", 32)
+        title_font = pygame.font.Font("fontss.ttf", 48)
+    except:
+        font = pygame.font.Font(None, 36)
+        title_font = pygame.font.Font(None, 48)
+    button_width, button_height = 360, 40
+    button_x, button_y = WIDTH - 600, HEIGHT - 200
+
+    while paused:
+        # Фон
+        menu_bg = pygame.image.load("images/screen0.png")
+        menu_bg = pygame.transform.scale(menu_bg, (WIDTH, HEIGHT))
+        screen.blit(menu_bg, (0, 0))
+        overlay = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
+        overlay.fill((0, 0, 0, 150))
+        screen.blit(overlay, (0, 0))
+
+        # Заголовок
+        title_text = title_font.render("Пауза", True, WHITE)
+        title_x = button_x
+        title_y = button_y - 100
+        screen.blit(title_text, (title_x, title_y))
+
+        # Белая линия
+        line_y = title_y + title_text.get_height() + 10
+        pygame.draw.line(screen, WHITE, (button_x - 40, line_y + 16), (button_x + 400, line_y + 16), 3)
+
+        # Кнопки
+        button_continue = pygame.Rect(button_x, button_y, button_width, button_height)
+        button_exit = pygame.Rect(button_x, button_y + 60, button_width, button_height)
+        button_surface_continue = pygame.Surface((button_width, button_height), pygame.SRCALPHA)
+        button_surface_exit = pygame.Surface((button_width, button_height), pygame.SRCALPHA)
+        button_surface_continue.fill((0, 0, 0, 0))
+        button_surface_exit.fill((0, 0, 0, 0))
+        screen.blit(button_surface_continue, (button_x, button_y))
+        screen.blit(button_surface_exit, (button_x, button_y + 60))
+
+        # Тексты на кнопках
+        continue_text = font.render("Продолжить", True, WHITE)
+        exit_text = font.render("Сохранить и выйти", True, WHITE)
+        screen.blit(continue_text, (button_x, button_y + 10))
+        screen.blit(exit_text, (button_x, button_y + 70))
+
+        pygame.display.flip()
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                save_game()
+                pygame.quit()
+                sys.exit()
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                mouse_pos = pygame.mouse.get_pos()
+                if button_continue.collidepoint(mouse_pos):  # Продолжить
+                    paused = False
+                elif button_exit.collidepoint(mouse_pos):  # Сохранить и выйти
+                    save_game()
+                    pygame.quit()
+                    sys.exit()
+
+
+def load_game():
+    global wave, money, tower
+    if os.path.exists("save.txt"):
+        try:
+            with open("save.txt", "r") as f:
+                lines = f.readlines()
+                if lines:  # Проверяем, что файл не пустой
+                    wave = int(lines[0].strip())
+                    money = int(lines[1].strip())
+                    tower.health = int(lines[2].strip())
+                    print("Игра загружена!")
+                else:
+                    print("Файл сохранения пуст, начинаем новую игру.")
+        except Exception as e:
+            print(f"Ошибка загрузки сохранения: {e}")
+    else:
+        print("Файл сохранения не найден, начинаем новую игру.")
+
+
 try:
     background = pygame.transform.scale(load_image("images/map.png"), (WIDTH, HEIGHT))
     player_sprite_sheet = load_image("images/player_walk.png")
-    icon = pygame.image.load('images/icon.png')
-    enemy_image = pygame.transform.scale(load_image("images/enemy.png"), (30, 30))
+    icon = pygame.image.load('images/tower.png')
+    enemy_images = [
+        pygame.transform.scale(load_image("images/enemy1.png"), (30, 30)),
+        pygame.transform.scale(load_image("images/enemy2.png"), (30, 30)),
+        pygame.transform.scale(load_image("images/enemy3.png"), (30, 30)),
+        pygame.transform.scale(load_image("images/enemy4.png"), (30, 30))
+    ]
     tower_image = pygame.transform.scale(load_image("images/tower.png"), (110, 110))
     attack_image = pygame.transform.scale(load_image("images/sword3.png"), (55, 55))
 except Exception as e:
@@ -169,15 +277,16 @@ class Tower(pygame.sprite.Sprite):
 
 # Враги
 class Enemy(pygame.sprite.Sprite):
-    def __init__(self, pos, speed, health, wave):
+    def __init__(self, pos, speed, health, wave, enemy_type):
         super().__init__()
-        self.image = enemy_image
+        self.image = enemy_images[enemy_type]
         self.rect = self.image.get_rect(center=pos)
         self.speed = speed
         self.health = health + wave * 2
         self.max_health = self.health
         self.wave = wave
         self.money_drop = 10 + wave * 2
+        self.enemy_type = enemy_type
 
     def update(self):
         self.move_towards(tower)
@@ -263,7 +372,18 @@ def spawn_enemy():
         pos = (-50, random.randint(0, HEIGHT))
     elif side == "right":
         pos = (WIDTH + 50, random.randint(0, HEIGHT))
-    enemy = Enemy(pos, enemy_base_speed + wave * 0.2, 2, wave)
+
+    # Выбор типа врага в зависимости от волны
+    if wave < 3:
+        enemy_type = 0  # Первый тип врага
+    elif wave < 5:
+        enemy_type = 1  # Второй тип врага
+    elif wave < 7:
+        enemy_type = 2  # Третий тип врага
+    else:
+        enemy_type = 3  # Четвертый тип врага
+
+    enemy = Enemy(pos, enemy_base_speed + wave * 0.2, 2, wave, enemy_type)
     all_sprites.add(enemy)
     enemies_group.add(enemy)
 
@@ -316,28 +436,63 @@ def start_screen():
                     (WIDTH * 0.75 + 200, 490),
                     2)
 
-    start_text = font.render("Нажмите любую клавишу для начала игры", True, (255, 255, 255))
-    start_text.set_alpha(160)
-    start_text_rect = start_text.get_rect(centerx=WIDTH // 2, bottom=HEIGHT - 50)
-    screen.blit(start_text, start_text_rect)
+    # Проверка на наличие сохранения
+    if os.path.exists("save.txt") and os.path.getsize("save.txt") > 0:
+        continue_text = font.render("Нажмите 'N' для продолжения игры", True, (255, 255, 255))
+        new_game_text = font.render("Нажмите 'K' для новой игры", True, (255, 255, 255))
+    else:
+        continue_text = font.render("Нажмите любую клавишу для начала игры", True, (255, 255, 255))
+
+    continue_text.set_alpha(160)
+    continue_text_rect = continue_text.get_rect(centerx=WIDTH // 2, bottom=HEIGHT - 100)
+    screen.blit(continue_text, continue_text_rect)
+
+    if os.path.exists("save.txt") and os.path.getsize("save.txt") > 0:
+        new_game_text.set_alpha(160)
+        new_game_text_rect = new_game_text.get_rect(centerx=WIDTH // 2, bottom=HEIGHT - 50)
+        screen.blit(new_game_text, new_game_text_rect)
+
+    pygame.display.flip()
 
     while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 terminate()
-            elif event.type == pygame.KEYDOWN or event.type == pygame.MOUSEBUTTONDOWN:
-                return
-        pygame.display.flip()
-        clock.tick(50)
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_n and os.path.exists("save.txt") and os.path.getsize("save.txt") > 0:  # Продолжить игру
+                    return True  # Вернуть True, если нажата кнопка N
+                elif event.key == pygame.K_k or not os.path.exists("save.txt") or os.path.getsize("save.txt") == 0:  # Новая игра
+                    return False  # Вернуть False, если нажата кнопка K или нет сохранений
+                else:  # Для любых других кнопок
+                    return False
 
 
-start_screen()
+load_game()
+
+if start_screen():
+    # Если выбрана продолжить игру
+    print("Продолжение игры...")
+else:
+    # Если выбрана новая игра
+    print("Новая игра...")
+    wave = 0
+    money = 0
+    tower.health = 100
+    enemies_group.empty()  # Очищаем список врагов
+    all_sprites.empty()  # Очищаем все спрайты
+    player = Player((WIDTH // 2, HEIGHT // 2 - 100))  # Создаем нового игрока
+    tower = Tower((WIDTH // 2, HEIGHT // 2))  # Создаем новую башню
+    all_sprites.add(player, tower)
+    enemies_group = pygame.sprite.Group()  # Создаем группу врагов
 
 while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
+            save_game()
             running = False
         if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_ESCAPE:  # Вызов меню паузы
+                pause_menu()
             if event.key == pygame.K_t and show_next_wave_text:
                 wave += 1
                 max_enemies_per_wave += 2
@@ -424,4 +579,3 @@ while running:
     frame_count += 1
 
 pygame.quit()
-
