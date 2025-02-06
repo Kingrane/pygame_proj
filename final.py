@@ -439,7 +439,7 @@ def start_screen():
     # Проверка на наличие сохранения
     if os.path.exists("save.txt") and os.path.getsize("save.txt") > 0:
         continue_text = font.render("Нажмите 'N' для продолжения игры", True, (255, 255, 255))
-        new_game_text = font.render("Нажмите 'K' для новой игры", True, (255, 255, 255))
+        new_game_text = font.render("Нажмите любую другую кнопку для начала игры", True, (255, 255, 255))
     else:
         continue_text = font.render("Нажмите любую клавишу для начала игры", True, (255, 255, 255))
 
